@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.turbo
+**/.turbo
+.git
+.gitignore
+**/*.log
+apps/api/uploads
+.env
+**/.env
+**/.env.local

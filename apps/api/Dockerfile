@@ -1,32 +1,30 @@
-# Optional Dockerfile for Railway/Render/Fly.io (alternative to nixpacks).
-# Build from repo root:  docker build -f apps/api/Dockerfile .
+# Dockerfile for the NestJS API. BUILD CONTEXT MUST BE THE REPO ROOT.
+# On Railway: clear "Root Directory" and set variable
+#   RAILWAY_DOCKERFILE_PATH=apps/api/Dockerfile
+# so the whole monorepo (incl. packages/shared) is available to the build.
 
-FROM node:20-slim AS base
+FROM node:20-slim
+
+# Prisma needs openssl at build & runtime.
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN npm i -g pnpm@9
+
 WORKDIR /app
 
-# -- Dependencies --
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
-COPY packages/shared/package.json packages/shared/
-COPY apps/api/package.json apps/api/
-RUN pnpm install --frozen-lockfile || pnpm install
+# Copy the whole monorepo (see .dockerignore for exclusions).
+COPY . .
 
-# -- Source --
-COPY packages/shared packages/shared
-COPY apps/api apps/api
+# Install all workspace deps (dev deps needed for the build).
+RUN pnpm install --no-frozen-lockfile
 
-# -- Build --
+# Compile the shared package to JS first (api requires it at runtime).
+RUN pnpm --filter @skripsita/shared build
+
+# Generate Prisma client + build the API.
+RUN pnpm --filter @skripsita/api prisma:generate
+RUN pnpm --filter @skripsita/api build
+
 WORKDIR /app/apps/api
-RUN pnpm prisma:generate && pnpm build
-
-# -- Runtime --
-FROM node:20-slim AS runner
-WORKDIR /app
-COPY --from=base /app/apps/api/dist ./dist
-COPY --from=base /app/apps/api/node_modules ./node_modules
-COPY --from=base /app/apps/api/prisma ./prisma
-COPY --from=base /app/node_modules/.pnpm node_modules/.pnpm
-
 ENV NODE_ENV=production
 EXPOSE 3001
 CMD ["node", "dist/main.js"]
