@@ -1,11 +1,16 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  // native = local dev; rhel targets = Vercel/AWS Lambda serverless runtime.
+  binaryTargets   = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider   = "postgresql"
+  // Pooled connection (Supabase pgbouncer, port 6543) for the app at runtime.
   url        = env("DATABASE_URL")
+  // Direct connection (port 5432) used by `prisma migrate` / `db push`.
+  directUrl  = env("DIRECT_URL")
   extensions = [vector]
 }
 

@@ -176,6 +176,15 @@ Setelah mengubah `.env`, **restart API**. Status koneksi bisa dilihat di halaman
 
 ---
 
+## 🚀 Deploy (Supabase + Vercel)
+
+Lihat **[DEPLOY.md](DEPLOY.md)** untuk panduan lengkap: setup Supabase (Postgres + pgvector + Storage), env vars, dan deploy ke Vercel (frontend, dan opsional backend) atau Railway/Render untuk backend.
+
+Ringkas:
+- DB + Storage → **Supabase** (`STORAGE_DRIVER=supabase`)
+- Frontend Next.js → **Vercel** (root `apps/web`)
+- Backend NestJS → **Vercel serverless** (root `apps/api`, lihat `apps/api/vercel.json`) atau **Railway/Render** bila butuh proses panjang tanpa timeout
+
 ## 📜 Lisensi
 
 Proprietary — internal project. Sesuaikan sebelum distribusi.
