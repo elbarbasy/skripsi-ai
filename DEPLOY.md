@@ -66,17 +66,60 @@ Buat **dua project Vercel** dari repo `elbarbasy/skripsi-ai` yang sama.
 
 ---
 
-## 2) Deploy — Opsi 2 (lebih andal untuk proses panjang): Backend di Railway/Render
+## 2) Deploy — Opsi 2 (REKOMENDASI): Backend di Railway + Frontend di Vercel
 
-- **Frontend** tetap di Vercel (langkah B di atas).
-- **Backend** ke [Railway](https://railway.app) / [Render](https://render.com):
-  - Root: `apps/api`
-  - Build: `pnpm install && pnpm --filter @skripsita/api build`
-  - Start: `node dist/main.js`
-  - Env vars sama seperti di atas; `PORT` diisi otomatis oleh platform (kode membaca `API_PORT`, sesuaikan bila perlu).
-- Supabase (DB + Storage) sama persis — tidak ada perubahan.
+Opsi ini lebih andal karena backend berjalan sebagai **proses terus-menerus** (bukan serverless function), tanpa batas timeout. Cocok untuk generate bab panjang.
 
-Kelebihan: tidak ada batas timeout serverless, cocok untuk generate skripsi panjang.
+### A. Backend di Railway
+
+1. Buat akun di [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → pilih `elbarbasy/skripsi-ai`.
+2. Railway akan mendeteksi monorepo. Set:
+   - **Root Directory**: `apps/api`
+   - (Atau Railway membaca `railway.toml` otomatis jika file terdeteksi)
+3. Tambahkan **Environment Variables** (Settings → Variables):
+   ```
+   DATABASE_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+   DIRECT_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+   OPENAI_API_KEY=sk-...
+   OPENAI_CHAT_MODEL=gpt-5
+   OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+   EMBEDDING_DIM=1536
+   AI_PRIMARY_PROVIDER=openai
+   GEMINI_API_KEY=      (opsional)
+   STORAGE_DRIVER=supabase
+   SUPABASE_URL=https://<ref>.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=eyJ...
+   SUPABASE_STORAGE_BUCKET=skripsita
+   API_PORT=3001
+   API_PREFIX=api
+   CORS_ORIGIN=https://<nama-web>.vercel.app
+   NODE_ENV=production
+   ```
+4. Railway build & deploy otomatis. Buka **Settings → Networking → Generate Domain** → Anda mendapat URL seperti `https://skripsi-api-production.up.railway.app`.
+5. Test: `GET https://<railway-url>/api/health` → harus `{ "status": "ok", "aiProviderConfigured": true }`.
+
+> 💡 File `railway.toml` sudah disediakan di `apps/api/railway.toml`. Railway membacanya otomatis.
+> Alternatif: gunakan `Dockerfile` yang juga sudah tersedia di `apps/api/Dockerfile`.
+
+### B. Frontend di Vercel (sama seperti sebelumnya)
+
+1. **New Project** di Vercel → import repo → **Root Directory** = `apps/web`
+2. Framework: **Next.js** (otomatis terdeteksi)
+3. Environment Variable:
+   ```
+   NEXT_PUBLIC_API_URL=https://<railway-url>/api
+   ```
+4. Deploy.
+5. **Penting:** setelah tahu URL web (mis. `https://skripsi-ai.vercel.app`), update `CORS_ORIGIN` di Railway lalu redeploy.
+
+### Alternatif: Render
+
+Render juga bisa:
+1. **New Web Service** → connect repo → Root = `apps/api`
+2. Build Command: `pnpm install --filter @skripsita/api... && pnpm --filter @skripsita/api prisma:generate && pnpm --filter @skripsita/api build`
+3. Start Command: `node dist/main.js`
+4. Env vars sama.
+5. Free tier punya cold starts; Starter ($7/mo) lebih andal.
 
 ---
 

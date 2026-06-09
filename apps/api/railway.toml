@@ -1,0 +1,13 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install --filter @skripsita/api... && pnpm --filter @skripsita/api prisma:generate && pnpm --filter @skripsita/api build"
+
+[deploy]
+startCommand = "node dist/main.js"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[service]
+internalPort = 3001
