@@ -1,13 +1,12 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pnpm install --filter @skripsita/api... && pnpm --filter @skripsita/api prisma:generate && pnpm --filter @skripsita/api build"
+# Run with Root Directory = apps/api. pnpm resolves the workspace root upward,
+# so @skripsita/shared is linked correctly.
+buildCommand = "pnpm install && pnpm prisma:generate && pnpm build"
 
 [deploy]
 startCommand = "node dist/main.js"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
-
-[service]
-internalPort = 3001
