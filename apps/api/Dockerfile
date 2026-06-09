@@ -3,7 +3,7 @@
 #   RAILWAY_DOCKERFILE_PATH=apps/api/Dockerfile
 # so the whole monorepo (incl. packages/shared) is available to the build.
 
-FROM node:20-slim
+FROM node:22-slim
 
 # Prisma needs openssl at build & runtime.
 RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*

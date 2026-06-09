@@ -4,7 +4,7 @@
 #   NEXT_PUBLIC_API_URL=https://<your-api-domain>/api
 # NEXT_PUBLIC_* is inlined at BUILD time, so it must be present during build.
 
-FROM node:20-slim
+FROM node:22-slim
 
 RUN npm i -g pnpm@9
 WORKDIR /app
