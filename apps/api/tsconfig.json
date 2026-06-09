@@ -20,10 +20,7 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "paths": {
-      "@skripsita/shared": ["../../packages/shared/src/index.ts"]
-    }
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "api", "prisma"]
