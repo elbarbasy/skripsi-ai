@@ -1,0 +1,16 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: skripsita-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skripsita
+    ports:
+      - "5432:5432"
+    volumes:
+      - skripsita_db_data:/var/lib/postgresql/data
+
+volumes:
+  skripsita_db_data:

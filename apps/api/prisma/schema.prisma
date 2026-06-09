@@ -1,0 +1,128 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+enum DocStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model Project {
+  id            String   @id @default(uuid())
+  title         String
+  topic         String?
+  studyProgram  String?
+  researchMethod String?
+  guidelineId   String?
+  guideline     CampusGuideline? @relation(fields: [guidelineId], references: [id], onDelete: SetNull)
+
+  chapters  Chapter[]
+  citations Citation[]
+  journals  Journal[]
+  exports   ExportJob[]
+  versions  ProjectVersion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectVersion {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  snapshot  Json
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model CampusGuideline {
+  id        String    @id @default(uuid())
+  name      String
+  fileUrl   String
+  status    DocStatus @default(PENDING)
+  rules     Json?
+  rawText   String?   @db.Text
+  projects  Project[]
+  chunks    DocumentChunk[]
+  createdAt DateTime  @default(now())
+}
+
+model Journal {
+  id        String    @id @default(uuid())
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title     String
+  fileUrl   String
+  status    DocStatus @default(PENDING)
+  summary   String?   @db.Text
+  method    String?
+  variables String[]
+  results   String?   @db.Text
+  rawText   String?   @db.Text
+  chunks    DocumentChunk[]
+  createdAt DateTime  @default(now())
+}
+
+/// RAG chunks. The embedding column is added/managed via raw SQL migration
+/// because Prisma cannot natively express the pgvector type.
+model DocumentChunk {
+  id          String  @id @default(uuid())
+  source      String // "guideline" | "journal"
+  guidelineId String?
+  guideline   CampusGuideline? @relation(fields: [guidelineId], references: [id], onDelete: Cascade)
+  journalId   String?
+  journal     Journal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  content     String  @db.Text
+  chunkIndex  Int
+  // embedding  vector(3072)  -> created via SQL (see prisma/sql/init.sql)
+  createdAt   DateTime @default(now())
+
+  @@index([guidelineId])
+  @@index([journalId])
+}
+
+model Chapter {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key       String // BAB_I .. BAB_V
+  content   String   @db.Text
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, key])
+}
+
+model Citation {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  style        String // APA7 | IEEE
+  authors      String
+  year         String
+  title        String
+  source       String
+  inText       String
+  bibliography String
+  createdAt    DateTime @default(now())
+}
+
+model ExportJob {
+  id        String    @id @default(uuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  format    String // DOCX | PDF
+  url       String?
+  status    DocStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+}
