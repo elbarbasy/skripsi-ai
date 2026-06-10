@@ -17,15 +17,18 @@ import type {
   WritingMode,
 } from '@skripsita/shared';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+// The browser always calls the SAME-ORIGIN proxy at /api
+// (see app/api/[...path]/route.ts). The Next server forwards each request to
+// the real backend using the runtime env BACKEND_URL. This avoids CORS,
+// mixed-content (http vs https), and build-time URL baking entirely.
+const BASE = '/api';
 
-/** Resolve a possibly-relative file URL returned by the API to an absolute URL. */
+/** Resolve a possibly-relative file URL returned by the API. */
 export function resolveFileUrl(url: string): string {
   if (!url) return url;
   if (url.startsWith('http')) return url;
-  // API returns e.g. "/api/files/xxx"; BASE already ends with "/api".
-  const origin = BASE.replace(/\/api$/, '');
-  return `${origin}${url}`;
+  // Relative files (local storage driver) are served through the same proxy.
+  return url;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
